@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import ipaddress
 import logging
+import socket
+import ssl
 import threading
 from dataclasses import dataclass
 
@@ -21,6 +24,21 @@ REQUEST_TIMEOUT_S = 3
 NOT_FOUND = "not_found"                         # nothing answered at that address
 NOT_VACUULA = "not_vacuula"                     # something answered, but not a usable Vacuula server
 VERSION_INCOMPATIBLE = "version_incompatible"   # user needs to update server to newer version
+ROBOT_PORTS_UNREACHABLE = "robot_ports_unreachable"  # web part answers, but robots could not connect
+WRONG_CERTIFICATE = "wrong_certificate"  # the domain robots connect to leads to another server
+IP_ADDRESS_REQUIRED = "ip_address_required"  # robots find a .local server by its IP, but a name was entered
+
+DEFAULT_HOSTNAME = "vacuula.local"  # servers that don't send a hostname
+
+ROBOT_PORT_TIMEOUT_S = 3
+
+def is_ip_address(address: str) -> bool:
+    try:
+        ipaddress.ip_address(address)
+        return True
+    except ValueError:
+        return False
+
 
 class _ServerCheckError(Exception):
     def __init__(self, kind: str, detail: str = "") -> None:
@@ -37,6 +55,7 @@ class _ServerDetails:
     gen3_port: int
     gen4_port: int
     version: str
+    hostname: str  # what robots connect to, VACUULA_HOSTNAME on the server
 
 
 def _check_server(ip: str, port: int, cert_path: str) -> _ServerDetails:
@@ -80,11 +99,33 @@ def _check_server(ip: str, port: int, cert_path: str) -> _ServerDetails:
 
         gen4_port = int(server_info["gen4_port"])
         gen3_port = int(server_info["gen3_port"])
+        hostname = str(server_info.get("hostname") or DEFAULT_HOSTNAME).lower()
     except (KeyError, TypeError, ValueError) as exc:
         raise _ServerCheckError(VERSION_INCOMPATIBLE, f"failed to parse server values: {exc}") from exc
 
-    logger.debug("Server at %s:%d is Vacuula v%s (gen3 port %d, gen4 port %d)", ip, port, server_version, gen3_port, gen4_port)
-    return _ServerDetails(ip=ip, cert=cert, port=port, gen3_port=gen3_port, gen4_port=gen4_port, version=server_version)
+    logger.debug("Server at %s:%d is Vacuula v%s (gen3 port %d, gen4 port %d, hostname %s)", ip, port, server_version, gen3_port, gen4_port, hostname)
+    return _ServerDetails(ip=ip, cert=cert, port=port, gen3_port=gen3_port, gen4_port=gen4_port, version=server_version, hostname=hostname)
+
+
+def _check_robot_ports(address: str, hostname: str, cert: str, *ports: int) -> None:
+    """Connects to the robot ports like a robot would. Fails when none can be reached. A .local name is reached at the address the server
+    answered on, a domain is looked up like the robot does and has to lead to this server."""
+    domain = not hostname.endswith(".local")
+    host = hostname if domain else address
+    context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+    context.load_verify_locations(cadata=cert)
+    for port in ports:
+        try:
+            with socket.create_connection((host, port), timeout=ROBOT_PORT_TIMEOUT_S) as sock:
+                if domain:
+                    context.wrap_socket(sock, server_hostname=hostname).close()
+                logger.debug("Robot port %s:%d is reachable", host, port)
+                return
+        except ssl.SSLCertVerificationError as exc:
+            raise _ServerCheckError(WRONG_CERTIFICATE, f"{host}:{port}: {exc.verify_message}") from exc
+        except OSError as exc:
+            logger.debug("Robot port %s:%d not reachable: %s", host, port, exc)
+    raise _ServerCheckError(ROBOT_PORTS_UNREACHABLE, f"no robot port {ports} reachable at {host}")
 
 
 def _parse_address(text: str) -> tuple[str, int]:
@@ -106,7 +147,7 @@ def _parse_address(text: str) -> tuple[str, int]:
 
 
 class _WorkerSignals(QObject):
-    found = Signal(str, str, int, int, int)  # ip, cert, vacuula_port, gen3_port, gen4_port
+    found = Signal(str, str, int, int, int, str)  # ip, cert, vacuula_port, gen3_port, gen4_port, hostname
     failed = Signal(str)
 
 
@@ -179,8 +220,8 @@ class _DetectionWorker(QRunnable):
             self.signals.failed.emit(exc.kind)
             return
 
-        logger.info("Vacuula server (v%s) found at %s:%d (gen4 port %d)", details.version, details.ip, details.port, details.gen4_port)
-        self.signals.found.emit(details.ip, details.cert, details.port, details.gen3_port, details.gen4_port)
+        logger.info("Vacuula server (v%s) found at %s:%d (gen4 port %d, hostname %s)", details.version, details.ip, details.port, details.gen4_port, details.hostname)
+        self.signals.found.emit(details.ip, details.cert, details.port, details.gen3_port, details.gen4_port, details.hostname)
 
     @staticmethod
     def _discover_vacuula() -> ServiceInfo | None:
@@ -219,24 +260,28 @@ class _ManualCheckWorker(QRunnable):
             return
         try:
             details = _check_server(host, port, MANUAL_CERT_PATH)
+            if details.hostname.endswith(".local") and not is_ip_address(host):
+                # the robot gets a hosts entry pointing the .local name at the entered address
+                raise _ServerCheckError(IP_ADDRESS_REQUIRED, f"{details.hostname} needs an IP address, got {host}")
+            _check_robot_ports(details.ip, details.hostname, details.cert, details.gen3_port, details.gen4_port)
         except _ServerCheckError as exc:
             logger.warning("Manual server check failed (%s): %s", exc.kind, exc)
             self.signals.failed.emit(exc.kind)
             return
 
         logger.info(
-            "Vacuula server (v%s) (manual) found at %s:%d (gen3 port %d, gen4 port %d)", 
-            details.version, details.ip, details.port, details.gen3_port, details.gen4_port
+            "Vacuula server (v%s) (manual) found at %s:%d (gen3 port %d, gen4 port %d, hostname %s)", 
+            details.version, details.ip, details.port, details.gen3_port, details.gen4_port, details.hostname
         )
-        self.signals.found.emit(details.ip, details.cert, details.port, details.gen3_port, details.gen4_port)
+        self.signals.found.emit(details.ip, details.cert, details.port, details.gen3_port, details.gen4_port, details.hostname)
 
 
 class ServerDetector(QObject):
     """Polls mDNS for M_DNS_SERVICE_TYPE, or checks a manual address, and
     emits the server's IP + cert once found."""
 
-    # ip, cert, vacuula_port, gen3_port, gen4_port, manual (True = user-entered address)
-    serverDetected = Signal(str, str, int, int, int, bool)
+    # ip, cert, vacuula_port, gen3_port, gen4_port, hostname, manual (True = user-entered address)
+    serverDetected = Signal(str, str, int, int, int, str, bool)
     manualCheckFailed = Signal(str)
     invalidServerVersion = Signal()
 
@@ -270,7 +315,7 @@ class ServerDetector(QObject):
         worker = _ManualCheckWorker(address)
         self._workers.add(worker)
         worker.signals.found.connect(
-            lambda ip, cert, port, gen3, gen4, w=worker: self._on_manual_found(w, ip, cert, port, gen3, gen4)
+            lambda ip, cert, port, gen3, gen4, hostname, w=worker: self._on_manual_found(w, ip, cert, port, gen3, gen4, hostname)
         )
         worker.signals.failed.connect(
             lambda kind, w=worker: self._on_manual_failed(w, kind)
@@ -286,17 +331,17 @@ class ServerDetector(QObject):
         worker = _DetectionWorker()
         self._workers.add(worker)
         worker.signals.found.connect(
-            lambda ip, cert, port, gen3, gen4, w=worker: self._on_found(w, ip, cert, port, gen3, gen4)
+            lambda ip, cert, port, gen3, gen4, hostname, w=worker: self._on_found(w, ip, cert, port, gen3, gen4, hostname)
         )
         worker.signals.failed.connect(lambda kind, w=worker: self._on_not_found(w, kind))
         self._pool.start(worker)
 
-    def _on_found(self, worker: QRunnable, ip: str, cert: str, port: int, gen3_port: int, gen4_port: int) -> None:
+    def _on_found(self, worker: QRunnable, ip: str, cert: str, port: int, gen3_port: int, gen4_port: int, hostname: str) -> None:
         self._busy = False
         self._workers.discard(worker)
         if not self._active or self._found:
             return  # stopped, or a manual check already won
-        self._finish(ip, cert, port, gen3_port, gen4_port, manual=False)
+        self._finish(ip, cert, port, gen3_port, gen4_port, hostname, manual=False)
 
     def _on_not_found(self, worker: QRunnable, kind: str) -> None:
         self._busy = False
@@ -306,12 +351,12 @@ class ServerDetector(QObject):
 
     # -- manual ------------------------------------------------------------------
 
-    def _on_manual_found(self, worker: QRunnable, ip: str, cert: str, port: int, gen3_port: int, gen4_port: int) -> None:
+    def _on_manual_found(self, worker: QRunnable, ip: str, cert: str, port: int, gen3_port: int, gen4_port: int, hostname: str) -> None:
         self._manual_busy = False
         self._workers.discard(worker)
         if self._found:
             return  # mDNS already found one in the meantime
-        self._finish(ip, cert, port, gen3_port, gen4_port, manual=True)
+        self._finish(ip, cert, port, gen3_port, gen4_port, hostname, manual=True)
 
     def _on_manual_failed(self, worker: QRunnable, kind: str) -> None:
         self._manual_busy = False
@@ -325,8 +370,8 @@ class ServerDetector(QObject):
 
     # -- shared ------------------------------------------------------------------
 
-    def _finish(self, ip: str, cert: str, port: int, gen3_port: int, gen4_port: int, *, manual: bool) -> None:
+    def _finish(self, ip: str, cert: str, port: int, gen3_port: int, gen4_port: int, hostname: str, *, manual: bool) -> None:
         self._found = True
         self._timer.stop()
         self._active = False
-        self.serverDetected.emit(ip, cert, port, gen3_port, gen4_port, manual)
+        self.serverDetected.emit(ip, cert, port, gen3_port, gen4_port, hostname, manual)

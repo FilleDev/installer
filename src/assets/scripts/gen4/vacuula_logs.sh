@@ -24,22 +24,25 @@ echo "logs collected" >> /tmp/vacuula-logs/vacuula.log
 
 echo "trying traceroute" >> /tmp/vacuula-logs/vacuula.log
 IP="$(sed -n '1p' /user/tron/vacuula.ini)"
+HOSTNAME="$(sed -n '2p' /user/tron/vacuula.ini)"
+HOSTNAME="${HOSTNAME:-vacuula.local}"
 
 traceroute $IP > /tmp/vacuula-logs/traceroute.log 2>&1
 
-if ! traceroute vacuula.local >> /tmp/vacuula-logs/traceroute.log 2>&1; then
-    echo "traceroute to vacuula.local failed, replacing entry in /etc/hosts" > /tmp/vacuula-logs/vacuula.log
+if ! traceroute $HOSTNAME >> /tmp/vacuula-logs/traceroute.log 2>&1; then
+    echo "traceroute to $HOSTNAME failed, replacing entry in /etc/hosts" > /tmp/vacuula-logs/vacuula.log
 
-    if [ -n "$IP" ]; then
-        grep -v "vacuula.local" /etc/hosts > /tmp/hosts.new
-        echo "$IP vacuula.local" >> /tmp/hosts.new
+    # only a .local name is in /etc/hosts, a domain is looked up through DNS
+    if [ -n "$IP" ] && [ "${HOSTNAME%.local}" != "$HOSTNAME" ]; then
+        grep -vF "$HOSTNAME" /etc/hosts > /tmp/hosts.new
+        echo "$IP $HOSTNAME" >> /tmp/hosts.new
 
         cat /tmp/hosts.new > /etc/hosts
         rm -f /tmp/hosts.new
     fi
 
     echo "retry after /etc/hosts update" >> /tmp/vacuula-logs/traceroute.log
-    traceroute vacuula.local >> /tmp/vacuula-logs/traceroute.log 2>&1
+    traceroute $HOSTNAME >> /tmp/vacuula-logs/traceroute.log 2>&1
 fi
 
 echo "traceroute done" >> /tmp/vacuula-logs/vacuula.log

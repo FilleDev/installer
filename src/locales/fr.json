@@ -32,6 +32,9 @@
   "serversearch.manual.try_connection": "Essayer la connexion",
   "serversearch.manual.incompatible": "Ce n'est pas un serveur Vacuula ça !",
   "serversearch.manual.not_found": "Aucun serveur trouvé à cette adresse",
+  "serversearch.manual.robot_ports_unreachable": "Le serveur a répondu, mais les ports des robots sont injoignables. Si le VACUULA_HOSTNAME du serveur est un domaine, il doit pointer directement vers le serveur et les ports des robots doivent être ouverts.",
+  "serversearch.manual.wrong_certificate": "Le VACUULA_HOSTNAME du serveur mène à un autre serveur. Vérifiez que le domaine pointe directement vers ce serveur et réessayez.",
+  "serversearch.manual.ip_address_required": "Le VACUULA_HOSTNAME de ce serveur est un nom .local, les robots ont donc besoin de son adresse IP. Saisissez l'adresse IP du serveur, ou définissez VACUULA_HOSTNAME sur votre domaine sur le serveur, redémarrez-le et réessayez.",
 
   "error.title": "Une erreur est survenue",
   "error.restart": "Réessayer l'installation",
@@ -154,5 +157,5 @@
   "provision.gen4.instructions": "Pour le connecter au serveur, maintenez le bouton de mise sous tension jusqu'à ce que le robot s'éteigne et patientez quelques secondes. Rallumez ensuite le robot et patientez jusqu'à ce qu'il soit complètement allumé.",
 
   "finished.title": "Robot <i>mordu à sang</i> par Vacuula !",
-  "finished.subtitle": "Vous pouvez désormais débrancher le robot de votre ordinateur et l'allumer ! Vous n'avez plus qu'à attendre qu'il soit détecté par votre <a href='http://vacuula.local'>Serveur Vacuula !</a>"
+  "finished.subtitle": "Vous pouvez désormais débrancher le robot de votre ordinateur et l'allumer ! Vous n'avez plus qu'à attendre qu'il soit détecté par votre <a href='{url}'>Serveur Vacuula !</a>"
 }

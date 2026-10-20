@@ -149,11 +149,12 @@ class Gen4Provisioner(QObject):
         mtp.send_file('/etc/wpa_supplicant/wpa_supplicant-wlan0.conf', storage_id, wifi_config)
 
     def _set_hosts(self, mtp: MtpDevice | WindowsMtpDevice, storage_id: int) -> None:
-        # update hosts file and add dns entry to resolve vacuula.local if ip was manually entered
+        # update hosts file and add dns entry to resolve the .local name if ip was manually entered,
+        # a domain is looked up through DNS
         vacuula_block = dedent(f"""\
         # Vacuula server
-        {self.vacuula_server_ip} vacuula.local
-        """) if self.manual_ip else ""
+        {self.vacuula_server_ip} {self.vacuula_server}
+        """) if self.manual_ip and self.vacuula_server.endswith(".local") else ""
 
         hosts_config = dedent(f"""\
             127.0.0.1	localhost.localdomain		localhost
@@ -170,7 +171,8 @@ class Gen4Provisioner(QObject):
             """).encode('utf-8')
         mtp.send_file('/etc/hosts', storage_id, hosts_config)
 
-        mtp.send_file('/user/tron/vacuula.ini', storage_id, self.vacuula_server_ip.encode('utf-8'))
+        # server ip and name, read by vacuula_logs.sh
+        mtp.send_file('/user/tron/vacuula.ini', storage_id, f"{self.vacuula_server_ip}\n{self.vacuula_server}\n".encode('utf-8'))
 
 
     def _on_step(self, step: int) -> None:

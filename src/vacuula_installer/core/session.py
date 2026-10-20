@@ -10,8 +10,9 @@ import usb.core  # type: ignore[reportMissingTypeStubs]
 
 @dataclass
 class SessionData:
-    server_ip: str | None = None
+    server_ip: str | None = None # or a domain, when entered manually
     server_ip_manual: bool = False
+    server_hostname: str = "vacuula.local" # what robots connect to, VACUULA_HOSTNAME on the server
     server_certificate: str | None = None
 
     # TODO: clean this up later as well, not really the cleanesy way rn
@@ -35,3 +36,11 @@ class SessionData:
     ssh_pubkey: str | None = None
     ssh_disable_pw: bool = False
     set_root_pass: str | None = None #none means no
+
+    @property
+    def server_url(self) -> str:
+        """Web panel link: the .local name when the server was found through mDNS, otherwise the address used"""
+        found_by_mdns = self.server_hostname.endswith(".local") and not self.server_ip_manual
+        host = self.server_hostname if found_by_mdns else self.server_ip
+        port = f":{self.vacuula_port}" if self.vacuula_port and self.vacuula_port != 80 else ""
+        return f"http://{host}{port}"

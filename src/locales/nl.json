@@ -32,6 +32,9 @@
   "serversearch.manual.try_connection": "Verbinding testen",
   "serversearch.manual.not_vacuula": "Niet-compatibele server gevonden",
   "serversearch.manual.not_found": "Geen server gevonden op dit adres",
+  "serversearch.manual.robot_ports_unreachable": "De server antwoordde, maar de robotpoorten zijn niet bereikbaar. Als de VACUULA_HOSTNAME van de server een domein is, moet het rechtstreeks naar de server wijzen en moeten de robotpoorten open zijn.",
+  "serversearch.manual.wrong_certificate": "De VACUULA_HOSTNAME van de server leidt naar een andere server. Zorg dat het domein rechtstreeks naar deze server wijst en probeer het opnieuw.",
+  "serversearch.manual.ip_address_required": "De VACUULA_HOSTNAME van deze server is een .local-naam, dus robots hebben het IP-adres nodig. Voer het IP-adres van de server in, of stel VACUULA_HOSTNAME op de server in op je domein, herstart de server en probeer het opnieuw.",
 
   "error.title": "Er is een fout opgetreden",
   "error.restart": "Probeer opnieuw te installeren",
@@ -155,5 +158,5 @@
   "provision.gen4.instructions": "Om verbinding te maken met de server, houd je de aan/uit-knop ingedrukt totdat je robot afsluit. Wacht een paar seconden en start de robot daarna opnieuw op.",
 
   "finished.title": "Robot <i>gebeten</i> door Vacuula",
-  "finished.subtitle": "Je kunt de robot nu loskoppelen van de computer en aanzetten! De robot verschijnt na een aantal seconden in je <a href='http://vacuula.local'>Vacuula-server!</a>"
+  "finished.subtitle": "Je kunt de robot nu loskoppelen van de computer en aanzetten! De robot verschijnt na een aantal seconden in je <a href='{url}'>Vacuula-server!</a>"
 }

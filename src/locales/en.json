@@ -32,6 +32,9 @@
   "serversearch.manual.try_connection": "Try connection",
   "serversearch.manual.not_vacuula": "Not a Vacuula server",
   "serversearch.manual.not_found": "No server found at this address",
+  "serversearch.manual.robot_ports_unreachable": "The server answered, but the robot ports can't be reached. If the server's VACUULA_HOSTNAME is a domain, it must point straight at the server, and the robot ports must be open.",
+  "serversearch.manual.wrong_certificate": "The server's VACUULA_HOSTNAME leads to a different server. Make sure the domain points straight at this server and try again.",
+  "serversearch.manual.ip_address_required": "This server's VACUULA_HOSTNAME is a .local name, so robots need its IP address. Enter the server's IP address, or set VACUULA_HOSTNAME to your domain on the server, restart it and try again.",
 
   "error.title": "An error occurred",
   "error.restart": "Try installing again",
@@ -156,5 +159,5 @@
   "provision.gen4.instructions": "To connect to the server, hold down the power button until your robot turns off and wait a few seconds. Then restart the robot and wait until it has fully started.",
 
   "finished.title": "Robot <i>bitten</i> by Vacuula",
-  "finished.subtitle": "You may now disconnect the robot from your computer and turn the robot on! Then please wait for the robot to show up in your <a href='http://vacuula.local'>Vacuula server!</a>"
+  "finished.subtitle": "You may now disconnect the robot from your computer and turn the robot on! Then please wait for the robot to show up in your <a href='{url}'>Vacuula server!</a>"
 }

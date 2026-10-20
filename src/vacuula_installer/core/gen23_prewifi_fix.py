@@ -171,9 +171,10 @@ class Gen23WiFiFixer(QObject):
         ip = session.server_ip
         gen3_port = session.gen3_port or GEN3_DEFAULT_PORT
         config_path = tmp_dir / "config"
-        config_path.write_bytes(f"{ip}\n{gen3_port}\n".encode())
-        # line 1: ip
+        config_path.write_bytes(f"{ip}\n{gen3_port}\n{session.server_hostname}\n".encode())
+        # line 1: ip (or the domain, when one was entered)
         # line 2: port
+        # line 3: name the robot connects to, VACUULA_HOSTNAME on the server
 
         patch_files = gen3_port_patch_files(gen3_port)
         port_patch_dir = tmp_dir / "port_patch"

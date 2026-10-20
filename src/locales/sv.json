@@ -32,6 +32,9 @@
   "serversearch.manual.try_connection": "Prova anslutning",
   "serversearch.manual.incompatible": "Ej en Vacuula-server",
   "serversearch.manual.not_found": "Ingen server hittades på denna adress",
+  "serversearch.manual.robot_ports_unreachable": "Servern svarade, men robotportarna går inte att nå. Om serverns VACUULA_HOSTNAME är en domän måste den peka direkt på servern, och robotportarna måste vara öppna.",
+  "serversearch.manual.wrong_certificate": "Serverns VACUULA_HOSTNAME leder till en annan server. Se till att domänen pekar direkt på den här servern och försök igen.",
+  "serversearch.manual.ip_address_required": "Serverns VACUULA_HOSTNAME är ett .local-namn, så robotarna behöver dess IP-adress. Ange serverns IP-adress, eller sätt VACUULA_HOSTNAME till din domän på servern, starta om den och försök igen.",
 
   "error.title": "Ett fel har inträffat",
   "error.restart": "Prova köra installationsprogrammet på nytt",
@@ -154,5 +157,5 @@
   "provision.gen4.instructions": "Klar! För att ansluta till servern, håll först startknappen nertryckt tills roboten stängs av.",
 
   "finished.title": "<i>Biten</i> av Vacuula",
-  "finished.subtitle": "Du kan nu koppla loss din robotdammsugare från datorn och starta upp den! Den bör snart därefter dyka upp i din <a href='http://vacuula.local'>Vacuula server</a>!"
+  "finished.subtitle": "Du kan nu koppla loss din robotdammsugare från datorn och starta upp den! Den bör snart därefter dyka upp i din <a href='{url}'>Vacuula server</a>!"
 }

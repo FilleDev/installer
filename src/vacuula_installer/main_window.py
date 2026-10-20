@@ -340,8 +340,9 @@ class MainWindow(QMainWindow):
             self._server_detector.check_manual
         )
 
-    def _on_server_detected(self, ip: str, cert: str, port: int, gen3_port: int, gen4_port: int, manual: bool) -> None:
+    def _on_server_detected(self, ip: str, cert: str, port: int, gen3_port: int, gen4_port: int, hostname: str, manual: bool) -> None:
         self._session.server_ip_manual = manual
+        self._session.server_hostname = hostname
         if manual:
             self._server_search_screen.set_manual_ip_test_result(True)
         self._goto_connect_robot_screen(ip, cert, port, gen3_port, gen4_port)
@@ -434,7 +435,7 @@ class MainWindow(QMainWindow):
         self._set_back_action(None)
 
         self._gen4_provisioner = Gen4Provisioner(
-            vacuula_server="vacuula.local",
+            vacuula_server=self._session.server_hostname,
             vacuula_server_ip=self._session.server_ip or "",
             vacuula_cert=self._session.server_certificate or "",
             wifi_ssid=self._session.wifi_ssid,
@@ -470,6 +471,7 @@ class MainWindow(QMainWindow):
 
     def _goto_finished_screen(self) -> None:
         self._robot_detector.stop()
+        self._finished_screen.set_server_url(self._session.server_url)
         self._crossfade_to(self._finished_screen)
 
     def _on_firmware(self, valid: bool, msg: str) -> None:
