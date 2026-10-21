@@ -19,7 +19,7 @@ Let's just say Neato robots are *really* cheap on the second hand market now for
 </details>
 
 > [!IMPORTANT]
-> __Before you can let Vacuula *bite* your robot vacuum(s), you must install the vacuula-server that replaces the closed Neato servers.__ This arrangement puts you in control of your own data and lifetime of the robot(s). If you haven't set up a server yet, learn about it (and download) at [github.com/vacuula/vacuula](https://github.com/vacuula/)!
+> __Before you can let Vacuula *bite* your robot vacuum(s), you must install the Vacuula-server that replaces the closed Neato servers.__ This arrangement puts you in control of your own data and lifetime of the robot(s). If you haven't set up a server yet, learn about it (and download) at [github.com/vacuula/vacuula](https://github.com/vacuula/)!
 
 <div>
   
