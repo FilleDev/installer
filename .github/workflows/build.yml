@@ -8,7 +8,7 @@ name: Build Desktop App
 
 on:
   push:
-    branches: [main]
+    branches: [personal]
   workflow_dispatch:
 
 env:
