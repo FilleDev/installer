@@ -340,7 +340,7 @@ class MainWindow(QMainWindow):
             self._server_detector.check_manual
         )
 
-    def _on_server_detected(self, ip: str, cert: str, port: int, gen3_port: int, gen4_port: int, manual: bool, hostname: str, timezone: str) -> None:
+    def _on_server_detected(self, ip: str, cert: str, port: int, gen3_port: int, gen4_port: int, hostname: str, manual: bool, timezone: str) -> None:
         self._session.server_ip_manual = manual
         self._session.server_hostname = hostname
         if manual:
