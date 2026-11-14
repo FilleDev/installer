@@ -505,7 +505,7 @@ class MainWindow(QMainWindow):
 
     def _goto_finished_screen(self) -> None:
         self._robot_detector.stop()
-        self._finished_screen.set_server_url(self._session.server_url)
+        self._finished_screen.set_vacuula_url(self._session.server_url)
         self._crossfade_to(self._finished_screen)
 
     def _on_firmware(self, valid: bool, msg: str) -> None:
