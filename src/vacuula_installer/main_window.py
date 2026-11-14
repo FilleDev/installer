@@ -343,6 +343,10 @@ class MainWindow(QMainWindow):
             self._server_detector.check_manual
         )
 
+        self._server_search_screen.enterIpManuallyRequested.connect(
+            self._server_detector.stop
+        )
+
     def _on_server_detected(self, ip: str, cert: str, port: int, gen3_port: int, gen4_port: int, hostname: str, manual: bool, timezone: str) -> None:
         self._session.server_ip_manual = manual
         self._session.server_hostname = hostname
@@ -445,7 +449,7 @@ class MainWindow(QMainWindow):
             wifi_ssid=self._session.wifi_ssid,
             wifi_psk=self._session.wifi_pass,
             gen4_port=self._session.gen4_port or 3443,
-            vacuula_port=self._session.vacuula_port or 80,
+            vacuula_port=self._session.vacuula_port or 8050,
             manual_ip=self._session.server_ip_manual,
             ssh_pubkey=self._session.ssh_pubkey if self._session.enable_ssh else None,
             parent=self,

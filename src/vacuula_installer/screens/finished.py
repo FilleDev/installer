@@ -75,8 +75,8 @@ class FinishedScreen(QWidget):
     def __init__(self, translator: Translator, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._translator = translator
+        self._vacuula_url = "http://vacuula.local"
         self._link_buttons: list[CircleLinkButton] = []
-        self._server_url = "http://vacuula.local"
 
         outer = QVBoxLayout(self)
         outer.setContentsMargins(20, 40, 20, 26)
@@ -121,12 +121,12 @@ class FinishedScreen(QWidget):
             row.addWidget(button)
         return row
 
-    def set_server_url(self, url: str) -> None:
-        self._server_url = url
-        self._retranslate()
+    def set_vacuula_url(self, url: str) -> None:
+        self._vacuula_url = url
+        self.finished_subtitle.setText(self._translator.tr("finished.subtitle", url=self._vacuula_url))
 
     def _retranslate(self) -> None:
         self._finished_title.setText(self._translator.tr("finished.title"))
-        self.finished_subtitle.setText(self._translator.tr("finished.subtitle", url=self._server_url))
+        self.finished_subtitle.setText(self._translator.tr("finished.subtitle", url=self._vacuula_url))
         for button in self._link_buttons:
             button._retranslate()

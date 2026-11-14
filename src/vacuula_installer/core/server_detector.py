@@ -16,7 +16,7 @@ from vacuula_installer.version import validate_version
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_SERVER_PORT = 80
+DEFAULT_SERVER_PORT = 8050
 MANUAL_CERT_PATH = "/api/cert"
 
 REQUEST_TIMEOUT_S = 3
@@ -268,8 +268,18 @@ class _ManualCheckWorker(QRunnable):
             _check_robot_ports(details.ip, details.hostname, details.cert, details.gen3_port, details.gen4_port)
         except _ServerCheckError as exc:
             logger.warning("Manual server check failed (%s): %s", exc.kind, exc)
-            self.signals.failed.emit(exc.kind)
-            return
+            
+            # work with server where port is still 80 by default
+            if port == DEFAULT_SERVER_PORT:
+                try:
+                    details = _check_server(host, 80, MANUAL_CERT_PATH)
+                except _ServerCheckError as exc2:
+                    logger.warning("Manual server check failed on port 80 (%s): %s", exc2.kind, exc2)
+                    self.signals.failed.emit(exc.kind)
+                    return
+            else:
+                self.signals.failed.emit(exc.kind)
+                return
 
         logger.info(
             "Vacuula server (v%s) (manual) found at %s:%d (gen3 port %d, gen4 port %d, hostname %s)",

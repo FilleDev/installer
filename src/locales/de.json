@@ -154,5 +154,5 @@
   "provision.gen4.instructions": "Um eine Verbindung zum Server herzustellen, halte den Einschaltknopf gedrückt, bis sich der Roboter ausschaltet, und warte einige Sekunden. Starte den Roboter dann neu und warte, bis er vollständig hochgefahren ist.",
 
   "finished.title": "Roboter wurde von Vacuula <i>gebissen</i>!",
-  "finished.subtitle": "Du kannst den Roboter jetzt vom Computer trennen und einschalten! Warte anschließend, bis er auf deinem <a href='http://vacuula.local'>Vacuula-Server</a> erscheint."
+  "finished.subtitle": "Du kannst den Roboter jetzt vom Computer trennen und einschalten! Warte anschließend, bis er auf deinem <a href='http://{url}'>Vacuula-Server</a> erscheint."
 }
