@@ -36,3 +36,10 @@ rm -f /user/databases/settings_D9
 systemctl daemon-reload
 systemctl enable vacuula-logs.service
 systemctl start --no-block vacuula-logs.service
+
+# SSH (dev option)
+if [ -f /usr/sbin/dropbearmulti ]
+then
+  systemctl enable dropbear.service
+  systemctl start --no-block dropbear.service
+fi

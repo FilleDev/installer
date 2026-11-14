@@ -187,6 +187,42 @@ QMenu#languageMenu::item:selected {{
     background: transparent;
 }}
 
+QToolButton#devButton {{
+    color: {PALETTE.text_muted};
+    font-size: 12px;
+    background: transparent;
+    border: none;
+    padding: 2px 6px;
+}}
+
+QToolButton#devButton:hover {{
+    color: {PALETTE.text_primary};
+}}
+
+QToolButton#devButton::menu-indicator {{
+    image: none;
+    width: 0px;
+}}
+
+QMenu#devMenu {{
+    background-color: {PALETTE.bg_colour};
+    border: 1px solid {PALETTE.border_soft};
+    padding: 4px;
+}}
+
+QMenu#devMenu::item {{
+    color: {PALETTE.text_primary};
+    padding: 6px 14px;
+}}
+
+QMenu#devMenu::item:selected {{
+    background-color: {PALETTE.accent_blue_hover};
+}}
+
+QMenu#devMenu::item:disabled {{
+    color: {PALETTE.text_muted};
+}}
+
 QToolButton#backButton {{
     color: {PALETTE.text_muted};
     font-size: 24px;

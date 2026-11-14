@@ -2,3 +2,7 @@ __pycache__/
 *.py[codz]
 
 .venv/
+
+# build output and IDE
+build/app/
+.idea/

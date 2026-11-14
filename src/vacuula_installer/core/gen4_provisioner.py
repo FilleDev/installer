@@ -28,6 +28,9 @@ FILES = {
     "/etc/systemd/network/wireless.network": "wireless.network",
 }
 
+# SSH dev option: static aarch64 (musl) Dropbear 2026.94, built from https://github.com/mkj/dropbear
+DROPBEAR_BIN = SCRIPTS_DIR.parent / "bin" / "gen4" / "dropbearmulti"
+
 
 def device_description(dev: usb.core.Device) -> str:
     try:
@@ -58,6 +61,7 @@ class Gen4Provisioner(QObject):
         gen4_port: int,
         vacuula_port: int,
         manual_ip: bool = False,
+        ssh_pubkey: str | None = None,
         parent: QObject | None = None,
     ) -> None:
         super().__init__(parent)
@@ -69,6 +73,7 @@ class Gen4Provisioner(QObject):
         self.gen4_port = gen4_port
         self.vacuula_port = vacuula_port
         self.manual_ip = manual_ip
+        self.ssh_pubkey = ssh_pubkey
         self._active = False
         self._step.connect(self._on_step)
         self._done.connect(self._on_done)
@@ -104,6 +109,7 @@ class Gen4Provisioner(QObject):
             self._set_vacuula_server(mtp, storage_id)
             self._set_wifi(mtp, storage_id)
             self._set_hosts(mtp, storage_id)
+            self._install_ssh(mtp, storage_id)
         except Exception:  # noqa: BLE001
             self._done.emit("error.generic.upload")
             return
@@ -174,6 +180,16 @@ class Gen4Provisioner(QObject):
         # server ip and name, read by vacuula_logs.sh
         mtp.send_file('/user/tron/vacuula.ini', storage_id, f"{self.vacuula_server_ip}\n{self.vacuula_server}\n".encode('utf-8'))
 
+
+    def _install_ssh(self, mtp: MtpDevice | WindowsMtpDevice, storage_id: int) -> None:
+        # dev only: Dropbear with key login for root, enabled by enable_vacuula_full.sh
+        if not self.ssh_pubkey:
+            return
+        mtp.send_file('/usr/sbin/dropbearmulti', storage_id, DROPBEAR_BIN.read_bytes())
+        with open(SCRIPTS_DIR / "gen4" / "dropbear.service", 'rb') as f:
+            mtp.send_file('/etc/systemd/system/dropbear.service', storage_id, f.read())
+        # MTP can only write into folders that exist, dropbear.service copies it to /home/root/.ssh
+        mtp.send_file('/user/tron/authorized_keys', storage_id, (self.ssh_pubkey.strip() + "\n").encode('utf-8'))
 
     def _on_step(self, step: int) -> None:
         if self._active:

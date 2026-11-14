@@ -1,0 +1,20 @@
+[Unit]
+Description=Dropbear SSH server (Vacuula dev option)
+After=network.target
+
+[Service]
+# files pushed over MTP are not executable, and dropbear refuses keys that others can write to
+ExecStartPre=-chmod 755 /usr/sbin/dropbearmulti
+ExecStartPre=-mkdir -p /etc/dropbear
+ExecStartPre=-chmod go-w /home/root
+ExecStartPre=-mkdir -p /home/root/.ssh
+ExecStartPre=-cp /user/tron/authorized_keys /home/root/.ssh/authorized_keys
+ExecStartPre=-chmod 700 /home/root/.ssh
+ExecStartPre=-chmod 600 /home/root/.ssh/authorized_keys
+# -F foreground, -E log to stderr (journal), -R create host keys on first start, -s key login only
+ExecStart=/usr/sbin/dropbearmulti dropbear -F -E -R -s -p 22
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

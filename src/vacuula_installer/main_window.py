@@ -8,6 +8,7 @@ in ``app.core`` -- here are signals connecting ui and core.
 from __future__ import annotations
 
 import logging
+import os
 import sys
 from collections.abc import Callable
 
@@ -82,6 +83,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self._translator = translator
         self._session = SessionData()
+        self._dev_ssh_key_path = ""  # chosen under Dev on the welcome screen, kept across restarts
 
         # Keep references to in-flight animations: QPropertyAnimation
         # doesn't guarantee its C++ side survives being garbage
@@ -287,6 +289,7 @@ class MainWindow(QMainWindow):
         self._welcome_screen.continueRequested.connect(
             self._select_dev_or_server_screen
         )
+        self._welcome_screen.sshKeyChanged.connect(self._on_dev_ssh_key_changed)
         self._disclaimer_screen.understandRequested.connect(self._goto_server_search_screen)
 
         self._server_detector.serverDetected.connect(self._on_server_detected)
@@ -433,6 +436,7 @@ class MainWindow(QMainWindow):
         self._gen4_provision_screen.reset()
         self._crossfade_to(self._gen4_provision_screen)
         self._set_back_action(None)
+        self._load_dev_ssh_key()
 
         self._gen4_provisioner = Gen4Provisioner(
             vacuula_server=self._session.server_hostname,
@@ -443,6 +447,7 @@ class MainWindow(QMainWindow):
             gen4_port=self._session.gen4_port or 3443,
             vacuula_port=self._session.vacuula_port or 80,
             manual_ip=self._session.server_ip_manual,
+            ssh_pubkey=self._session.ssh_pubkey if self._session.enable_ssh else None,
             parent=self,
         )
         self._gen4_provisioner.stepChanged.connect(self._gen4_provision_screen.set_step)
@@ -452,6 +457,31 @@ class MainWindow(QMainWindow):
             self._handle_robot_disconnected()
         else:
             self._gen4_provisioner.start(self._session.robot_usb_device)
+
+    def _on_dev_ssh_key_changed(self, path: str) -> None:
+        self._dev_ssh_key_path = path
+        logger.info("Dev option: SSH key %s", path or "removed")
+
+    def _load_dev_ssh_key(self) -> None:
+        # Dev only: the key picked under Dev on the welcome screen, or VACUULA_SSH_PUBKEY
+        # (e.g. C:\Users\you\.ssh\id_ed25519.pub), installs Dropbear SSH on Gen4 robots
+        self._session.enable_ssh = False
+        self._session.ssh_pubkey = None
+        path = self._dev_ssh_key_path or os.environ.get("VACUULA_SSH_PUBKEY", "").strip()
+        if not path:
+            return
+        try:
+            with open(os.path.expanduser(path), encoding="utf-8") as f:
+                key = f.read().strip()
+        except OSError:
+            logger.exception("Could not read VACUULA_SSH_PUBKEY file %s, skipping SSH", path)
+            return
+        if not key.startswith(("ssh-", "ecdsa-")):
+            logger.warning("VACUULA_SSH_PUBKEY file %s does not look like an OpenSSH public key, skipping SSH", path)
+            return
+        self._session.enable_ssh = True
+        self._session.ssh_pubkey = key
+        logger.info("Dev option: installing Dropbear SSH with key from %s", path)
 
     def _gen4_set_provision_finished(self) -> None:
         self._session.install_done = True
