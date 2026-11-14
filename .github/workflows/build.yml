@@ -218,6 +218,9 @@ jobs:
           # No FUSE inside the container; this also covers any AppImage that
           # linuxdeploy launches itself.
           APPIMAGE_EXTRACT_AND_RUN: "1"
+          # The bundled Gen4 dropbear (aarch64) makes appimagetool see two
+          # architectures, so name the one the AppImage is for.
+          ARCH: x86_64
           # "" for the "linux" entry, "-glibc2.36" for the glibc2.36 entry.
           LINUX_SUFFIX: ${{ matrix.label != 'linux' && format('-{0}', matrix.label) || '' }}
         run: |
